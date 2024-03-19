@@ -24,6 +24,7 @@ class BlogsController < ApplicationController
 
   def create
     @blog = current_user.blogs.new(blog_params)
+    @blog.random_eyecatch = false if !current_user.premium && blog_params[:random_eyecatch] == 'true'
 
     if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
@@ -33,11 +34,9 @@ class BlogsController < ApplicationController
   end
 
   def update
-    if !current_user.premium && blog_params[:random_eyecatch] == 'true'
-      redirect_to blog_url(@blog), alert: 'Premium users only can set random eyecatch.'
-      return
-    end
-    if @blog.update(blog_params)
+    updated_params = blog_params
+    updated_params = updated_params.merge(random_eyecatch: false) if !current_user.premium && blog_params[:random_eyecatch] == 'true'
+    if @blog.update(updated_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
