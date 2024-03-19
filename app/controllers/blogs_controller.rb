@@ -11,11 +11,9 @@ class BlogsController < ApplicationController
   end
 
   def show
-    @blog = Blog.find(params[:id])
-
     return unless @blog.secret && current_user != @blog.user
 
-    raise ActiveRecord::RecordNotFound
+    @blog = Blog.where(secret: false).find_by!(id: params[:id])
   end
 
   def new
