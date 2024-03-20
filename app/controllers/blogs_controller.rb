@@ -3,7 +3,6 @@
 class BlogsController < ApplicationController
   skip_before_action :authenticate_user!, only: %i[index show]
 
-  before_action :set_blog, only: %i[show]
   before_action :set_current_user_blog, only: %i[edit update destroy]
 
   def index
@@ -11,9 +10,11 @@ class BlogsController < ApplicationController
   end
 
   def show
-    return unless @blog.secret && current_user != @blog.user
-
-    @blog = Blog.where(secret: false).find_by!(id: params[:id])
+    @blog = if user_signed_in?
+              Blog.where(id: params[:id], user: current_user).or(Blog.where(secret: false, id: params[:id])).find_by!(id: params[:id])
+            else
+              Blog.where(secret: false).find_by!(id: params[:id])
+            end
   end
 
   def new
@@ -53,10 +54,6 @@ class BlogsController < ApplicationController
   end
 
   private
-
-  def set_blog
-    @blog = Blog.find(params[:id])
-  end
 
   def set_current_user_blog
     @blog = current_user.blogs.find(params[:id])
