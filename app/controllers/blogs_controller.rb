@@ -34,8 +34,11 @@ class BlogsController < ApplicationController
   end
 
   def update
-    updated_params = blog_params
-    updated_params = updated_params.merge(random_eyecatch: false) if !current_user.premium && blog_params[:random_eyecatch] == 'true'
+    updated_params = if !current_user.premium && blog_params[:random_eyecatch] == 'true' && !@blog.random_eyecatch
+                       blog_params.merge(random_eyecatch: false)
+                     else
+                       blog_params
+                     end
     if @blog.update(updated_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
