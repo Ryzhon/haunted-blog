@@ -20,8 +20,8 @@ class BlogsController < ApplicationController
   def edit; end
 
   def create
-    @blog = current_user.blogs.new(blog_params)
-    @blog.random_eyecatch = false if !current_user.premium && blog_params[:random_eyecatch] == 'true'
+    adjusted_blog_params = adjust_random_eyecatch(blog_params)
+    @blog = current_user.blogs.new(adjusted_blog_params)
 
     if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
@@ -31,12 +31,8 @@ class BlogsController < ApplicationController
   end
 
   def update
-    updated_params = if !current_user.premium && blog_params[:random_eyecatch] == 'true' && !@blog.random_eyecatch
-                       blog_params.merge(random_eyecatch: false)
-                     else
-                       blog_params
-                     end
-    if @blog.update(updated_params)
+    adjusted_blog_params = adjust_random_eyecatch(blog_params)
+    if @blog.update(adjusted_blog_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
@@ -50,6 +46,12 @@ class BlogsController < ApplicationController
   end
 
   private
+
+  def adjust_random_eyecatch(blog_params)
+    return blog_params if current_user.premium
+
+    blog_params.merge(random_eyecatch: false)
+  end
 
   def set_current_user_blog
     @blog = current_user.blogs.find(params[:id])
