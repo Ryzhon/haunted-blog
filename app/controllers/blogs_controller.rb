@@ -2,7 +2,6 @@
 
 class BlogsController < ApplicationController
   skip_before_action :authenticate_user!, only: %i[index show]
-
   before_action :set_current_user_blog, only: %i[edit update destroy]
 
   def index
@@ -20,9 +19,7 @@ class BlogsController < ApplicationController
   def edit; end
 
   def create
-    adjusted_blog_params = adjust_random_eyecatch(blog_params)
-    @blog = current_user.blogs.new(adjusted_blog_params)
-
+    @blog = current_user.blogs.new(blog_params)
     if @blog.save
       redirect_to blog_url(@blog), notice: 'Blog was successfully created.'
     else
@@ -31,8 +28,7 @@ class BlogsController < ApplicationController
   end
 
   def update
-    adjusted_blog_params = adjust_random_eyecatch(blog_params)
-    if @blog.update(adjusted_blog_params)
+    if @blog.update(blog_params)
       redirect_to blog_url(@blog), notice: 'Blog was successfully updated.'
     else
       render :edit, status: :unprocessable_entity
@@ -40,24 +36,19 @@ class BlogsController < ApplicationController
   end
 
   def destroy
-    @blog.destroy!
-
+    @blog.destroy
     redirect_to blogs_url, notice: 'Blog was successfully destroyed.', status: :see_other
   end
 
   private
-
-  def adjust_random_eyecatch(blog_params)
-    return blog_params if current_user.premium
-
-    blog_params.merge(random_eyecatch: false)
-  end
 
   def set_current_user_blog
     @blog = current_user.blogs.find(params[:id])
   end
 
   def blog_params
-    params.require(:blog).permit(:title, :content, :secret, :random_eyecatch)
+    permitted_params = %i[title content secret]
+    permitted_params << :random_eyecatch if current_user.premium
+    params.require(:blog).permit(*permitted_params)
   end
 end
